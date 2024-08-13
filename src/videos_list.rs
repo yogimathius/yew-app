@@ -4,8 +4,8 @@ use crate::video::Video; // replace with your own path
 
 #[derive(Properties, PartialEq)]
 pub struct VideosListProps {
-    videos: Vec<Video>,
-    on_click: Callback<Video>,
+    pub videos: Vec<Video>,
+    pub on_click: Callback<Video>,
 }
 
 #[function_component(VideosList)]
