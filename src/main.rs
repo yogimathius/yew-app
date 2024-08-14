@@ -1,8 +1,25 @@
 use gloo_net::http::Request;
+use log::error;
 use yew::prelude::*;
 use yew_app::video::Video; // replace with your own path
 use yew_app::video_details::VideoDetails;
-use yew_app::videos_list::VideosList;
+use yew_app::videos_list::VideosList; // Ensure you have a logger set up
+
+async fn fetch_videos() -> Result<Vec<Video>, Box<dyn std::error::Error>> {
+    match Request::get("/tutorial/data.json").send().await {
+        Ok(response) => match response.json().await {
+            Ok(videos) => Ok(videos),
+            Err(e) => {
+                error!("Failed to parse JSON: {:?}", e);
+                Err(Box::new(e))
+            }
+        },
+        Err(e) => {
+            error!("Failed to send request: {:?}", e);
+            Err(Box::new(e))
+        }
+    }
+}
 
 #[function_component(App)]
 fn app() -> Html {
@@ -23,13 +40,13 @@ fn app() -> Html {
         use_effect_with((), move |_| {
             let videos = videos.clone();
             wasm_bindgen_futures::spawn_local(async move {
-                let fetched_videos: Vec<Video> = Request::get("https://yew.rs/tutorial/data.json")
-                    .send()
-                    .await
-                    .unwrap()
-                    .json()
-                    .await
-                    .unwrap();
+                let fetched_videos: Vec<Video> = match fetch_videos().await {
+                    Ok(videos) => videos,
+                    Err(e) => {
+                        error!("Failed to fetch videos: {:?}", e);
+                        vec![]
+                    }
+                };
                 videos.set(fetched_videos);
             });
             || ()
